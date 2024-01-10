@@ -1,7 +1,6 @@
-import { LightningElement, wire } from "lwc";
+import { LightningElement, wire, api } from "lwc";
 import { getRecord } from "lightning/uiRecordApi";
 
-// import BOATMC from the message channel
 // Import message service features required for publishing and the message channel
 import {
   subscribe,
@@ -9,7 +8,9 @@ import {
   APPLICATION_SCOPE,
   MessageContext
 } from "lightning/messageService";
-import boatMessageChannel from "@salesforce/messageChannel/boatMessageChannel__c";
+
+// import BOATMC from the message channel
+import BOATMC from "@salesforce/messageChannel/boatMessageChannel__c";
 
 // Declare the const LONGITUDE_FIELD for the boat's Longitude__s
 const LONGITUDE_FIELD = "Boat__c.Geolocation__Longitude__s";
@@ -27,7 +28,7 @@ export default class BoatMap extends LightningElement {
 
   // Getter and Setter to allow for logic to run on recordId change
   // this getter must be public
-  get recordId() {
+  @api get recordId() {
     return this.boatId;
   }
   set recordId(value) {
@@ -66,22 +67,25 @@ export default class BoatMap extends LightningElement {
       return;
     }
     // Subscribe to the message channel to retrieve the recordId and explicitly assign it to boatId.
-    if (!this.subscription) {
-      this.subscription = subscribe(
-        this.messageContext,
-        boatMessageChannel,
-        (message) => this.handleMessage(message),
-        { scope: APPLICATION_SCOPE }
-      );
-    }
+
+    this.subscription = subscribe(
+      this.messageContext,
+      BOATMC,
+      // (message) => this.handleMessage(message),
+      (message) => {
+        this.boatId = message.recordId;
+      },
+      { scope: APPLICATION_SCOPE }
+    );
   }
 
-  handleMessage(message) {
-    // console.log("handleMessage called with: ", message.recordId);
-    // console.log("prev boatId: ", this.boatId);
-    this.boatId = message.recordId;
-    // console.log("new boatId: ", this.boatId);
-  }
+  //* An alternative pattern to handle changes in the subscription
+  // handleMessage(message) {
+  //   // console.log("handleMessage called with: ", message.recordId);
+  //   // console.log("prev boatId: ", this.boatId);
+  //   this.boatId = message.recordId;
+  //   // console.log("new boatId: ", this.boatId);
+  // }
 
   unsubscribeToMessageChannel() {
     unsubscribe(this.subscription);
@@ -99,8 +103,6 @@ export default class BoatMap extends LightningElement {
 
   // Creates the map markers array with the current boat's location for the map.
   updateMap(Longitude, Latitude) {
-    console.log("typeof ======> ", typeof Longitude.value);
-
     this.mapMarkers = [
       {
         location: { Longitude: Longitude.value, Latitude: Latitude.value }
