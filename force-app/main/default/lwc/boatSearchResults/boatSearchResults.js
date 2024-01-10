@@ -1,4 +1,5 @@
 import { LightningElement, wire } from "lwc";
+import { ShowToastEvent } from "lightning/platformShowToastEvent";
 
 // APEX METHODS
 import getBoats from "@salesforce/apex/BoatDataService.getBoats";
@@ -69,7 +70,9 @@ export default class BoatSearchResults extends LightningElement {
 
   // this public function must refresh the boats asynchronously
   // uses notifyLoading
-  refresh() {}
+  refresh() {
+    refreshApex();
+  }
 
   // this function must update selectedBoatId and call sendMessageService
   updateSelectedTile(event) {
@@ -84,6 +87,16 @@ export default class BoatSearchResults extends LightningElement {
     publish(this.messageContext, boatMessageChannel, payload);
   }
 
+  createToastEvent(variant = "success", title, message) {
+    const event = new ShowToastEvent({
+      title,
+      message,
+      variant
+    });
+
+    return event;
+  }
+
   // The handleSave method must save the changes in the Boat Editor
   // passing the updated fields from draftValues to the
   // Apex method updateBoatList(Object data).
@@ -92,12 +105,24 @@ export default class BoatSearchResults extends LightningElement {
   handleSave(event) {
     // notify loading
     const updatedFields = event.detail.draftValues;
+
     // Update the records via Apex
     updateBoatList({ data: updatedFields })
-      .then(() => {})
-      .catch((error) => {})
+      .then(() => {
+        // fire toast message => success
+        this.dispatchEvent(
+          this.createToastEvent(SUCCESS_VARIANT, SUCCESS_TITLE, MESSAGE_SHIP_IT)
+        );
+        
+        // trigger loading spinner
+        this.refresh();
+      })
+      .catch((error) => {
+        // fire toast message => error
+      })
       .finally(() => {});
   }
+
   // Check the current value of isLoading before dispatching the doneloading or loading custom event
   notifyLoading(isLoading) {}
 }

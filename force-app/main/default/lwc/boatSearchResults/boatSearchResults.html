@@ -25,6 +25,7 @@
             </lightning-layout-item>
           </template>
         </lightning-layout>
+
       </div>
     </lightning-tab>
     <lightning-tab label="Boat Editor" value="2">
@@ -34,7 +35,7 @@
         data={boats}
         columns={columns}
         onsave={handleSave}
-        draft-values={draftValues}
+        hide-checkbox-column
       ></lightning-datatable>
     </lightning-tab>
     <lightning-tab label="Boats Near Me" value="3">
